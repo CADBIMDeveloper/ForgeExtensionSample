@@ -14,6 +14,12 @@
 
         snapshotsPanel = new SnapshotsPanel(viewer.container, newGUID())
 
+        snapshotsPanel.addVisibilityListener(function (isVisible) {
+            if (!isVisible) {
+                viewer.setNavigationLock(false);
+            }
+        });
+
         return true;
     };
 
@@ -120,7 +126,9 @@
     }
 
     function showSnapShots() {
+        snapshotsPanel.setSnapshots(snapshots);
         snapshotsPanel.setVisible(true);
+        viewer.setNavigationLock(true);
     }
 
     function newGUID() {
@@ -162,6 +170,34 @@
 
     SnapshotsPanel.prototype = Object.create(Autodesk.Viewing.UI.DockingPanel.prototype);
     SnapshotsPanel.prototype.constructor = SnapshotsPanel;
+    SnapshotsPanel.prototype.setSnapshots = function (items) {
+        var panelContent = $("#" + this.baseId + " > .snapshots-content");
+        panelContent.empty()
+
+        var ul = $("<ul></ul>");
+
+        var restoreSnapshot = function (evt) {
+            snapshot = items
+		        .filter(function (s) { return s.id === evt.target.id })
+		        .forEach(function (s) {
+		            s.restore();
+		        })
+        }
+
+        for (var i = 0; i < items.length; ++i) {
+            var snapshot = items[i];
+            var itemEl = $("<li></li>")
+            itemEl.html(snapshot.title);
+            itemEl.attr("id", snapshot.id)
+            itemEl.css("color", "white")
+
+            itemEl.click(restoreSnapshot);
+
+            ul.append(itemEl)
+        }
+
+        panelContent.append(ul);
+    }
 }
 
 ModelNotes.prototype = Object.create(Autodesk.Viewing.Extension.prototype);
