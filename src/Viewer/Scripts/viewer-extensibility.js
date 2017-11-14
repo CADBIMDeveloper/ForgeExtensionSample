@@ -4,26 +4,48 @@
     var viewer = aViewer;
     var self = this;
 
+    var snapshots = []
+
+    self.load = function () {
+        createToolbar();
+
+        console.log("loaded")
+
+        return true;
+    };
+
+    self.unload = function () {
+        removeToolbar();
+
+        Autodesk.Viewing.theExtensionManager.unregisterExtension("ModelNotes");
+
+        snapshots = [];
+
+        console.log("unloaded")
+
+        return true;
+    };
+
     function createToolbar() {
         var toolbar = new Autodesk.Viewing.UI.ToolBar('model-notes-toolbar');
         var ctrlGroup = new Autodesk.Viewing.UI.ControlGroup('Model.Notes.ToolBar.ControlGroup');
         ctrlGroup.addClass('toolbar-vertical-group');
 
         var buttons = [{
-                name: "MN.AddNote",
-                icon: "pencil",
-                tooltip: "Добавить замечание",
-                click: function () {
-                    addSnapShot();
-                }
-            }, {
-                name: "MN.ShowNotes",
-                icon: "tags",
-                tooltip: "Показать замечания",
-                click: function () {
-                    showSnapShots();
-                }
+            name: "MN.AddNote",
+            icon: "pencil",
+            tooltip: "Добавить замечание",
+            click: function () {
+                addSnapShot();
             }
+        }, {
+            name: "MN.ShowNotes",
+            icon: "tags",
+            tooltip: "Показать замечания",
+            click: function () {
+                showSnapShots();
+            }
+        }
         ];
 
         for (var i = 0; i < buttons.length; ++i) {
@@ -34,23 +56,6 @@
 
         createToolbarHtml(toolbar);
     }
-
-    self.load = function () {
-        createToolbar();
-
-        console.log("loaded");
-
-        return true;
-    };
-    self.unload = function () {
-        removeToolbar();
-
-        Autodesk.Viewing.theExtensionManager.unregisterExtension("ModelNotes");
-
-        console.log("unloaded")
-
-        return true;
-    };
 
     function createButton(opts) {
         var button = new Autodesk.Viewing.UI.Button(opts.name);
@@ -103,11 +108,28 @@
     }
 
     function addSnapShot() {
-        alert("add snap shot");
+        var title = prompt("Замечание");
+        if (title !== null) {
+            snapshots.push(new Snapshot(viewer, newGUID(), title))
+        }
     }
 
     function showSnapShots() {
-        alert("show snapshots")
+        if (snapshots.length) {
+            snapshots[0].restore()
+        }
+    }
+
+    function newGUID() {
+        var d = new Date().getTime();
+        var guid = 'xxxx-xxxx-xxxx-xxxx-xxxx'.replace(
+		  /[xy]/g,
+		  function (c) {
+		      var r = (d + Math.random() * 16) % 16 | 0;
+		      d = Math.floor(d / 16);
+		      return (c == 'x' ? r : (r & 0x7 | 0x8)).toString(16);
+		  });
+        return guid;
     }
 }
 
@@ -115,3 +137,21 @@ ModelNotes.prototype = Object.create(Autodesk.Viewing.Extension.prototype);
 ModelNotes.prototype.constructor = ModelNotes;
 
 Autodesk.Viewing.theExtensionManager.registerExtension("ModelNotes", ModelNotes);
+
+
+function Snapshot(viewer, id, title) {
+    this.id = id;
+    this.title = title;
+    this.viewer = viewer;
+    this.selectedElementIds = viewer.getSelection();
+    this.position = viewer.navigation.getPosition();
+    this.target = viewer.navigation.getTarget();
+    this.cameraUpVector = viewer.navigation.getCameraUpVector();
+}
+
+Snapshot.prototype.restore = function () {
+    this.viewer.navigation.setPosition(this.position)
+    this.viewer.navigation.setTarget(this.target)
+    this.viewer.navigation.setCameraUpVector(this.cameraUpVector)
+    this.viewer.select(this.selectedElementIds)
+}
