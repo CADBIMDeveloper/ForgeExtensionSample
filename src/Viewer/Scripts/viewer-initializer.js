@@ -1,5 +1,8 @@
 ﻿var myViewerDiv = document.getElementById('viewer');
-var viewer = new Autodesk.Viewing.Private.GuiViewer3D(myViewerDiv);
+var extensionsConfig = {
+    extensions: ['ModelNotes']
+};
+var viewer = new Autodesk.Viewing.Private.GuiViewer3D(myViewerDiv, extensionsConfig);
 var options = {
     'env': 'Local',
     'document': './Content/Model/0.svf'
