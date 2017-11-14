@@ -23,6 +23,9 @@ namespace Viewer
                       "~/Scripts/bootstrap.js",
                       "~/Scripts/respond.js"));
 
+            bundles.Add(new ScriptBundle("~/bundles/viewer-extensibility")
+                .Include("~/Scripts/viewer-extensibility.js"));
+
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       "~/Content/bootstrap.css",
                       "~/Content/site.css"));
