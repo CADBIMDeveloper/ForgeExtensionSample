@@ -17,6 +17,9 @@
         snapshotsPanel.addVisibilityListener(function (isVisible) {
             if (!isVisible) {
                 viewer.setNavigationLock(false);
+                for (var i = 0; i < snapshots.length; ++i) {
+                    snapshots[i].restoreColors();
+                }
             }
         });
 
@@ -177,10 +180,11 @@
         var ul = $("<ul></ul>");
 
         var restoreSnapshot = function (evt) {
-            snapshot = items
+            items
 		        .filter(function (s) { return s.id === evt.target.id })
 		        .forEach(function (s) {
 		            s.restore();
+		            s.colorize();
 		        })
         }
 
@@ -197,6 +201,71 @@
         }
 
         panelContent.append(ul);
+    }
+    var overlayName = "temperary-colored-overlay";
+
+    function addMaterial(color) {
+        var material = new THREE.MeshPhongMaterial({
+            color: color
+        });
+
+        viewer.impl.createOverlayScene(overlayName, material, material);
+
+        return material;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Set color for nodes
+    // objectIds should be an array of dbId
+    ///////////////////////////////////////////////////////////////////////////
+    Autodesk.Viewing.Viewer3D.prototype.setColorMaterial = function (objectIds, color) {
+        var material = addMaterial(color);
+
+        for (var i = 0; i < objectIds.length; i++) {
+
+            var dbid = objectIds[i];
+
+            //from dbid to node, to fragid
+            var it = viewer.model.getData().instanceTree;
+
+            it.enumNodeFragments(dbid, function (fragId) {
+                var renderProxy = viewer.impl.getRenderProxy(viewer.model, fragId);
+
+                renderProxy.meshProxy = new THREE.Mesh(renderProxy.geometry, renderProxy.material);
+
+                renderProxy.meshProxy.matrix.copy(renderProxy.matrixWorld);
+                renderProxy.meshProxy.matrixWorldNeedsUpdate = true;
+                renderProxy.meshProxy.matrixAutoUpdate = false;
+                renderProxy.meshProxy.frustumCulled = false;
+
+                viewer.impl.addOverlay(overlayName, renderProxy.meshProxy);
+                viewer.impl.invalidate(true);
+
+            }, false);
+        }
+    }
+
+
+    Autodesk.Viewing.Viewer3D.prototype.restoreColorMaterial = function (objectIds) {
+        for (var i = 0; i < objectIds.length; i++) {
+
+            var dbid = objectIds[i];
+
+            //from dbid to node, to fragid
+            var it = viewer.model.getData().instanceTree;
+
+            it.enumNodeFragments(dbid, function (fragId) {
+                var renderProxy = viewer.impl.getRenderProxy(viewer.model, fragId);
+
+                if (renderProxy.meshProxy) {
+
+                    viewer.impl.clearOverlay(overlayName);
+                    delete renderProxy.meshProxy;
+
+                    viewer.impl.invalidate(true);
+                }
+            }, true);
+        }
     }
 }
 
@@ -221,4 +290,12 @@ Snapshot.prototype.restore = function () {
     this.viewer.navigation.setTarget(this.target)
     this.viewer.navigation.setCameraUpVector(this.cameraUpVector)
     this.viewer.select(this.selectedElementIds)
+}
+
+Snapshot.prototype.colorize = function () {
+    this.viewer.setColorMaterial(this.selectedElementIds, 0xff6600);
+}
+
+Snapshot.prototype.restoreColors = function () {
+    this.viewer.restoreColorMaterial(this.selectedElementIds);
 }
