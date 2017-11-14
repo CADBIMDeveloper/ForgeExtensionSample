@@ -5,11 +5,14 @@
     var self = this;
 
     var snapshots = []
+    var snapshotsPanel = null;
 
     self.load = function () {
         createToolbar();
 
         console.log("loaded")
+
+        snapshotsPanel = new SnapshotsPanel(viewer.container, newGUID())
 
         return true;
     };
@@ -22,6 +25,8 @@
         snapshots = [];
 
         console.log("unloaded")
+
+        snapshotsPanel.setVisible(false);
 
         return true;
     };
@@ -115,9 +120,7 @@
     }
 
     function showSnapShots() {
-        if (snapshots.length) {
-            snapshots[0].restore()
-        }
+        snapshotsPanel.setVisible(true);
     }
 
     function newGUID() {
@@ -131,6 +134,34 @@
 		  });
         return guid;
     }
+
+    function SnapshotsPanel(parentContainer, baseId) {
+        this.baseId = baseId;
+        this.content = document.createElement('div');
+
+        this.content.id = baseId + 'PanelContentId';
+
+        Autodesk.Viewing.UI.DockingPanel.call(
+		  this,
+		  parentContainer,
+		  baseId,
+		  "Snapshots",
+		  { shadow: true });
+
+        this.container.style.right = "0px";
+        this.container.style.top = "0px";
+
+        this.container.style.width = "380px";
+        this.container.style.height = "400px";
+
+        this.container.style.resize = "auto";
+
+        var html = "<div class='snapshots-content'></div>";
+        $('#' + baseId).append(html);
+    }
+
+    SnapshotsPanel.prototype = Object.create(Autodesk.Viewing.UI.DockingPanel.prototype);
+    SnapshotsPanel.prototype.constructor = SnapshotsPanel;
 }
 
 ModelNotes.prototype = Object.create(Autodesk.Viewing.Extension.prototype);
