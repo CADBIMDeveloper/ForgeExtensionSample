@@ -283,6 +283,7 @@ function Snapshot(viewer, id, title) {
     this.position = viewer.navigation.getPosition();
     this.target = viewer.navigation.getTarget();
     this.cameraUpVector = viewer.navigation.getCameraUpVector();
+    this.navigationtool = this.viewer.getActiveNavigationTool();
 }
 
 Snapshot.prototype.restore = function () {
@@ -290,6 +291,7 @@ Snapshot.prototype.restore = function () {
 
     this.viewer.navigation.setIsLocked(false);
 
+    this.viewer.setActiveNavigationTool(this.navigationtool);
     this.viewer.navigation.setView(this.position, this.target);
     this.viewer.navigation.setCameraUpVector(this.cameraUpVector);
     this.viewer.select(this.selectedElementIds);
