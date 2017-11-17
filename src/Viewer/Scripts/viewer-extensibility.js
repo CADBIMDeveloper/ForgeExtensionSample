@@ -286,10 +286,15 @@ function Snapshot(viewer, id, title) {
 }
 
 Snapshot.prototype.restore = function () {
-    this.viewer.navigation.setPosition(this.position)
-    this.viewer.navigation.setTarget(this.target)
-    this.viewer.navigation.setCameraUpVector(this.cameraUpVector)
-    this.viewer.select(this.selectedElementIds)
+    var lockStatus = this.viewer.navigation.getIsLocked();
+
+    this.viewer.navigation.setIsLocked(false);
+
+    this.viewer.navigation.setView(this.position, this.target);
+    this.viewer.navigation.setCameraUpVector(this.cameraUpVector);
+    this.viewer.select(this.selectedElementIds);
+
+    this.viewer.navigation.setIsLocked(lockStatus);
 }
 
 Snapshot.prototype.colorize = function () {
